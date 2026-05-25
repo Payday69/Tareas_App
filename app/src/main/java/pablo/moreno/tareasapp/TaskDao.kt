@@ -10,10 +10,15 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
-    @Query(
-        "SELECT * FROM tasks ORDER BY createdAt DESC"
-    )
+    @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
     fun getAllTasks(): Flow<List<TaskEntity>>
+
+    @Query("""
+        SELECT * FROM tasks
+        WHERE title LIKE '%' || :query || '%'
+        ORDER BY createdAt DESC
+    """)
+    fun searchTasks(query: String): Flow<List<TaskEntity>>
 
     @Insert
     suspend fun insert(task: TaskEntity): Long

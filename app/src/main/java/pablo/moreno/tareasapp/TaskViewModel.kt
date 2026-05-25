@@ -7,8 +7,14 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -16,11 +22,28 @@ class TaskViewModel(
     private val dao: TaskDao
 ) : ViewModel() {
 
-    // Exponemos la lista de tareas como StateFlow.
-    // stateIn convierte el Flow del DAO en un StateFlow
-    // que Compose puede observar fácilmente.
-    val tasks: StateFlow<List<TaskEntity>> = dao
-        .getAllTasks()
+    private val _searchInput = MutableStateFlow("")
+    val searchInput: StateFlow<String> = _searchInput.asStateFlow()
+
+    private val _activeQuery = MutableStateFlow("")
+
+    private val _sortOrder = MutableStateFlow(SortOrder.DATE_DESC)
+    val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val tasks: StateFlow<List<TaskEntity>> = combine(
+        _activeQuery, _sortOrder
+    ) { query, sort -> Pair(query, sort) }
+        .flatMapLatest { (query, sort) ->
+            dao.searchTasks(query).map { lista ->
+                when (sort) {
+                    SortOrder.DATE_DESC  -> lista.sortedByDescending { it.createdAt }
+                    SortOrder.DATE_ASC   -> lista.sortedBy { it.createdAt }
+                    SortOrder.TITLE_ASC  -> lista.sortedBy { it.title.lowercase() }
+                    SortOrder.TITLE_DESC -> lista.sortedByDescending { it.title.lowercase() }
+                }
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -44,6 +67,18 @@ class TaskViewModel(
         viewModelScope.launch {
             dao.delete(task)
         }
+    }
+
+    fun onSearchInputChanged(text: String) {
+        _searchInput.value = text
+    }
+
+    fun executeSearch() {
+        _activeQuery.value = _searchInput.value.trim()
+    }
+
+    fun onSortOrderChanged(order: SortOrder) {
+        _sortOrder.value = order
     }
 
     companion object {

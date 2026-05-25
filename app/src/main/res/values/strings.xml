@@ -10,4 +10,11 @@
     <string name="delete_confirm_message">Esta acción no se puede deshacer.</string>
     <string name="delete_confirm_button">Eliminar</string>
     <string name="cancel_button">Cancelar</string>
+    <string name="search_placeholder">Buscar por título</string>
+    <string name="search_button_desc">Buscar</string>
+    <string name="sort_label">Ordenar:</string>
+    <string name="sort_date_desc">Más recientes primero</string>
+    <string name="sort_date_asc">Más antiguas primero</string>
+    <string name="sort_title_asc">Título A-Z</string>
+    <string name="sort_title_desc">Título Z-A</string>
 </resources>

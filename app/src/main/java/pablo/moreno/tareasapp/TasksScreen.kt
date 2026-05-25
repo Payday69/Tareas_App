@@ -36,10 +36,11 @@ fun TasksScreen(
     )
 ) {
     val tasks by viewModel.tasks.collectAsStateWithLifecycle()
+    val searchInput by viewModel.searchInput.collectAsStateWithLifecycle()
+    val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
     var nuevaTareaTexto by remember { mutableStateOf("") }
     var tareaAEliminar by remember { mutableStateOf<TaskEntity?>(null) }
 
-    // Diálogo de confirmación antes de eliminar
     tareaAEliminar?.let { tarea ->
         AlertDialog(
             onDismissRequest = { tareaAEliminar = null },
@@ -68,12 +69,33 @@ fun TasksScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
+            // ----- Titulo -----
             Text(
                 text = stringResource(R.string.app_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
+            // ----- Barra de búsqueda -----
+            SearchBar(
+                searchInput = searchInput,
+                onSearchInputChanged = { texto ->
+                    viewModel.onSearchInputChanged(texto)
+                },
+                onSearchClicked = {
+                    viewModel.executeSearch()
+                },
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // ----- Selector de ordenamiento -----
+            SortOrderSelector(
+                sortOrder = sortOrder,
+                onSortOrderChanged = { viewModel.onSortOrderChanged(it) },
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // ----- Lista de tareas -----
             Box(modifier = Modifier.weight(1f)) {
                 if (tasks.isEmpty()) {
                     Text(
@@ -103,6 +125,7 @@ fun TasksScreen(
                 }
             }
 
+            // ----- Campo para agregar nueva tarea -----
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
