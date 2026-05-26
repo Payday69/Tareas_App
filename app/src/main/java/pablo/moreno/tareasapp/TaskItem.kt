@@ -36,10 +36,10 @@ import java.util.Locale
 fun TaskItem(
     task: TaskEntity,
     onToggleCompleted: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: (onCancel: () -> Unit) -> Unit
 ) {
     val dateFormat = remember {
-        SimpleDateFormat("dd/MM HH:mm", Locale("es"))
+        SimpleDateFormat("dd/MM HH:mm", Locale.forLanguageTag("es"))
     }
     val fechaTexto = remember(task.createdAt) {
         dateFormat.format(Date(task.createdAt))
@@ -48,11 +48,10 @@ fun TaskItem(
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                true
-            } else {
-                false
+                onDelete {
+                }
             }
+            false
         }
     )
 

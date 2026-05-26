@@ -40,10 +40,14 @@ fun TasksScreen(
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
     var nuevaTareaTexto by remember { mutableStateOf("") }
     var tareaAEliminar by remember { mutableStateOf<TaskEntity?>(null) }
+    var cancelarEliminar by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     tareaAEliminar?.let { tarea ->
         AlertDialog(
-            onDismissRequest = { tareaAEliminar = null },
+            onDismissRequest = {
+                cancelarEliminar?.invoke()
+                tareaAEliminar = null
+            },
             title = { Text(stringResource(R.string.delete_confirm_title)) },
             text = { Text(stringResource(R.string.delete_confirm_message)) },
             confirmButton = {
@@ -55,7 +59,10 @@ fun TasksScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { tareaAEliminar = null }) {
+                TextButton(onClick = {
+                    cancelarEliminar?.invoke()
+                    tareaAEliminar = null
+                }) {
                     Text(stringResource(R.string.cancel_button))
                 }
             }
@@ -69,14 +76,12 @@ fun TasksScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp)
         ) {
-            // ----- Titulo -----
             Text(
                 text = stringResource(R.string.app_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
 
-            // ----- Barra de búsqueda -----
             SearchBar(
                 searchInput = searchInput,
                 onSearchInputChanged = { texto ->
@@ -88,14 +93,12 @@ fun TasksScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // ----- Selector de ordenamiento -----
             SortOrderSelector(
                 sortOrder = sortOrder,
                 onSortOrderChanged = { viewModel.onSortOrderChanged(it) },
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // ----- Lista de tareas -----
             Box(modifier = Modifier.weight(1f)) {
                 if (tasks.isEmpty()) {
                     Text(
@@ -116,8 +119,9 @@ fun TasksScreen(
                                 onToggleCompleted = {
                                     viewModel.toggleCompleted(task)
                                 },
-                                onDelete = {
+                                onDelete = { onCancel ->
                                     tareaAEliminar = task
+                                    cancelarEliminar = onCancel
                                 }
                             )
                         }
@@ -125,7 +129,6 @@ fun TasksScreen(
                 }
             }
 
-            // ----- Campo para agregar nueva tarea -----
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
